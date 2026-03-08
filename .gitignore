@@ -165,5 +165,7 @@ cython_debug/
 
 # Personal configuration and simulation results
 *.local.yaml
+*.local.csv
 *.private.yaml
-output*.csv
+*.private.csv
+output*
