@@ -11,7 +11,9 @@
 # 全体設定
 simulation_settings:
   inflation_rate: 0.01      # インフレ率 (1% = 0.01)
-  duration_years: 50        # シミュレーション期間 (年)
+  # シミュレーション期間の指定 (duration_years か end_age のいずれか一方を指定)
+  # duration_years: 50        # シミュレーション期間 (年)
+  end_age: 90               # 主メンバー(role: self)がこの年齢になるまで計算
   start_year: 2026          # シミュレーション開始年
 
 # 家族構成 (夫婦2名)
@@ -31,7 +33,7 @@ members:
 income_entries:
   - member: "本人"
     category: "salary"      # salary (給与), business (事業), pension (年金) 等
-    amount: 6000000         # 年収 (円)
+    amount: 6000000         # 年収 所得税と住民税と社会保険料等控除後の手取り (円)
     start_year: 2026
     end_year: 2045          # 2045年までこの収入が続くと仮定
     growth_rate: 0.01       # 昇給率 (1% = 0.01)

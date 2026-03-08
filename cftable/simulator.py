@@ -8,13 +8,24 @@ class Simulator:
                  income_entries: List[IncomeEntry], expense_entries: List[ExpenseEntry], 
                  accounts: List[Account]):
         self.inflation_rate = settings['inflation_rate']
-        self.duration_years = settings['duration_years']
         self.start_year = settings['start_year']
         self.members = members
         self.income_entries = income_entries
         self.expense_entries = expense_entries
         self.accounts = {a.name: a for a in accounts}
         self.results = []
+
+        # Calculate duration_years
+        if 'duration_years' in settings:
+            self.duration_years = settings['duration_years']
+        elif 'end_age' in settings:
+            primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
+            birth_year = primary_member.birth_date.year
+            end_year = birth_year + settings['end_age']
+            self.duration_years = max(0, end_year - self.start_year + 1)
+        else:
+            # Default to 50 years if neither is specified
+            self.duration_years = 50
 
     def run(self):
         primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
