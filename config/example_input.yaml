@@ -1,0 +1,66 @@
+# キャッシュフロー・シミュレーション 入力設定ファイル例
+# このファイルを編集して、シミュレーションを実行します。
+
+# 全体設定
+simulation_settings:
+  inflation_rate: 0.01      # インフレ率 (1% = 0.01)
+  duration_years: 50        # シミュレーション期間 (年)
+  start_year: 2024          # シミュレーション開始年
+
+# 家族構成 (夫婦2名)
+members:
+  - name: "本人"
+    role: "self"
+    birth_date: "1980-01-01"
+    retirement_age: 65      # 退職年齢
+    pension_start_age: 65   # 年金受給開始年齢
+  - name: "配偶者"
+    role: "spouse"
+    birth_date: "1982-05-15"
+    retirement_age: 65
+    pension_start_age: 65
+
+# 収入項目
+income_entries:
+  - member: "本人"
+    category: "salary"      # salary (給与), business (事業), pension (年金) 等
+    amount: 6000000         # 年収 (円)
+    start_year: 2024
+    end_year: 2045          # 2045年までこの収入が続くと仮定
+    growth_rate: 0.01       # 昇給率 (1% = 0.01)
+
+  - member: "配偶者"
+    category: "part_time"
+    amount: 1000000
+    start_year: 2024
+    end_year: 2047
+
+# 支出項目
+expense_entries:
+  - category: "mortgage"    # 住宅ローン
+    amount: 1200000         # 年間返済額
+    start_year: 2024
+    end_year: 2050
+    inflation_indexed: false # ローンはインフレの影響を受けない
+
+  - category: "food"        # 食費
+    amount: 800000
+    start_year: 2024
+    end_year: 2074          # シミュレーション終了まで
+    inflation_indexed: true  # 食費はインフレの影響を受ける
+
+  - category: "utility"     # 光熱費
+    amount: 300000
+    start_year: 2024
+    end_year: 2074
+    inflation_indexed: true
+
+# 口座・資産状況
+accounts:
+  - name: "living"          # 生活費口座
+    initial_balance: 2000000 # 初期残高 (円)
+    expected_return: 0.0     # 期待利回り (0%)
+
+  - name: "general"         # 総合口座 (投資用)
+    initial_balance: 5000000
+    expected_return: 0.03    # 期待利回り (3%)
