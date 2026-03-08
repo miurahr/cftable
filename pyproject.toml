@@ -22,3 +22,20 @@ cftable = "cftable.cli:run_cli"
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["cftable*"]
+
+[tool.tox]
+legacy_conf_dict = { "tox" = { "envlist" = "py314" } }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.tox.env.py314]
+deps = [
+    "pytest",
+    "pytest-mock",
+    "PyYAML",
+    "matplotlib"
+]
+commands = [
+    ["pytest", "{posargs}"]
+]
