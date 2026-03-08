@@ -34,12 +34,22 @@ class IncomeEntry:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
+        start_year = data.get('start_year')
+        if start_year is None:
+            # support 'year' as shortcut for one-shot payments
+            start_year = data.get('year')
+        
+        if start_year is None:
+            raise KeyError("Income entry must have 'start_year' or 'year'")
+            
+        end_year = data.get('end_year', start_year)
+        
         return cls(
             member=data['member'],
             category=data['category'],
             amount=float(data['amount']),
-            start_year=data['start_year'],
-            end_year=data['end_year'],
+            start_year=int(start_year),
+            end_year=int(end_year),
             growth_rate=data.get('growth_rate', 0.0)
         )
 
@@ -59,11 +69,21 @@ class ExpenseEntry:
 
     @classmethod
     def from_dict(cls, data: Dict[str, Any]):
+        start_year = data.get('start_year')
+        if start_year is None:
+            # support 'year' as shortcut for one-shot payments
+            start_year = data.get('year')
+        
+        if start_year is None:
+            raise KeyError("Expense entry must have 'start_year' or 'year'")
+            
+        end_year = data.get('end_year', start_year)
+        
         return cls(
             category=data['category'],
             amount=float(data['amount']),
-            start_year=data['start_year'],
-            end_year=data['end_year'],
+            start_year=int(start_year),
+            end_year=int(end_year),
             inflation_indexed=data.get('inflation_indexed', True)
         )
 

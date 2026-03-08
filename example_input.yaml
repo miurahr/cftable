@@ -76,6 +76,11 @@ income_entries:
     end_year: 2056
     growth_rate: 0.0
 
+  - member: "本人"
+    category: "retirement"      # 退職金 (ワンショット)
+    amount: 20000000
+    year: 2045
+
 # 支出項目
 expense_entries:
   - category: "mortgage"    # 住宅ローン

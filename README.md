@@ -71,6 +71,7 @@ python3 -m cftable input.yaml -o output.csv
 - `amount`: 年間の収入額（円）
 - `start_year`: 収入が発生する開始年
 - `end_year`: 収入が終了する年
+- `year`: (ワンショット収入のみ) 発生する年。`start_year`, `end_year` の代わりに指定可能。
 - `growth_rate`: 年間の昇給率（例: `0.01` は 1%）
 
 ### 4. expense_entries (支出項目)
@@ -79,6 +80,7 @@ python3 -m cftable input.yaml -o output.csv
 - `amount`: 年間の支出額（円）
 - `start_year`: 支出が発生する開始年
 - `end_year`: 支出が終了する年
+- `year`: (ワンショット支出のみ) 発生する年。`start_year`, `end_year` の代わりに指定可能。
 - `inflation_indexed`: インフレ率を適用するかどうか (`true` または `false`)
   - 住宅ローンなどは `false`、食費などは `true` を推奨します。
 
