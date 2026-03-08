@@ -17,9 +17,15 @@ class Simulator:
         self.results = []
 
     def run(self):
+        primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
+
         for i in range(self.duration_years):
             current_year = self.start_year + i
             
+            # Reset annual limits for NISA etc.
+            for account in self.accounts.values():
+                account.reset_annual_limit()
+
             # 1. Apply returns to accounts
             for account in self.accounts.values():
                 account.apply_return()
@@ -42,6 +48,16 @@ class Simulator:
 
             living_acc.balance += (annual_income - annual_expense)
 
+            # 4.1 DC/iDeCo Contributions
+            # Age-limited contributions from surplus
+            dc_accounts = [acc for name, acc in self.accounts.items() if ('dc' in name.lower() or 'ideco' in name.lower())]
+            for dc_acc in dc_accounts:
+                if dc_acc.contribution_amount > 0 and living_acc.balance > 0:
+                    if primary_member.get_age(current_year) < dc_acc.contribution_end_age:
+                        amount = min(dc_acc.contribution_amount, living_acc.balance)
+                        dc_acc.invest(amount)
+                        living_acc.balance -= amount
+
             # 4.5. Maintain Defense Reserve (0.5 to 1.0 year of expenses)
             # Ensure defense has at least 6 months worth of annual expenses if living has surplus
             defense_accs = [acc for name, acc in self.accounts.items() if 'defense' in name.lower()]
@@ -53,6 +69,32 @@ class Simulator:
                     transfer = min(needed, living_acc.balance)
                     defense_acc.balance += transfer
                     living_acc.balance -= transfer
+
+            # 4.6. Investment of Surplus (NISA -> General)
+            if living_acc.balance > 0:
+                # 1. NISA investment
+                nisa_accounts = [acc for name, acc in self.accounts.items() if 'nisa' in name.lower()]
+                for nisa_acc in nisa_accounts:
+                    if living_acc.balance <= 0: break
+                    
+                    # Calculate available room for this year
+                    annual_room = nisa_acc.annual_investment_limit - nisa_acc.annual_invested
+                    lifetime_room = nisa_acc.lifetime_investment_limit - nisa_acc.cost_basis
+                    room = max(0.0, min(annual_room, lifetime_room))
+                    
+                    if room > 0:
+                        invest_amount = min(room, living_acc.balance)
+                        nisa_acc.invest(invest_amount)
+                        living_acc.balance -= invest_amount
+
+                # 2. General account investment
+                if living_acc.balance > 0:
+                    general_accounts = [acc for name, acc in self.accounts.items() if 'general' in name.lower()]
+                    for general_acc in general_accounts:
+                        if living_acc.balance <= 0: break
+                        invest_amount = living_acc.balance
+                        general_acc.invest(invest_amount)
+                        living_acc.balance -= invest_amount
 
             # 5. Withdrawal Strategies
             for name, acc in self.accounts.items():
@@ -69,7 +111,8 @@ class Simulator:
                         elif strat['type'] == 'fixed_rate':
                             withdrawal_amount = acc.balance * strat['rate']
                         
-                        actual = acc.withdraw(withdrawal_amount)
+                        apply_tax = 'general' in name.lower()
+                        actual = acc.withdraw(withdrawal_amount, apply_tax=apply_tax)
                         living_acc.balance += actual
 
             # 6. Funding Logic if living < 0
@@ -90,19 +133,24 @@ class Simulator:
                 for general_acc in get_accounts_by_pattern('general'):
                     if shortfall <= 0: break
                     if general_acc.balance > 0:
-                        cash_pos = general_acc.balance * general_acc.cash_ratio
-                        sec_pos = general_acc.balance * (1 - general_acc.cash_ratio)
+                        # For general account, we need to withdraw more to cover the tax if profit exists.
+                        # Target is shortfall. Net = Gross - Tax.
+                        # We use a simplified approach for tax on shortfall:
+                        # Since withdraw() handles tax calculation, we need to ask for more gross than shortfall.
                         
-                        from_cash = min(cash_pos, shortfall)
-                        general_acc.balance -= from_cash
-                        living_acc.balance += from_cash
-                        shortfall -= from_cash
+                        # Calculate gross needed to get 'shortfall' net.
+                        # Net = Gross - 0.2 * (Gross * (1 - CostBasis/Balance))
+                        # Net = Gross * (1 - 0.2 * (1 - CostBasis/Balance))
+                        # Gross = Net / (1 - 0.2 * (1 - CostBasis/Balance))
                         
-                        if shortfall > 0:
-                            from_sec = min(sec_pos, shortfall)
-                            general_acc.balance -= from_sec
-                            living_acc.balance += from_sec
-                            shortfall -= from_sec
+                        cost_basis_ratio = general_acc.cost_basis / general_acc.balance if general_acc.balance > 0 else 1.0
+                        tax_factor = 1.0 - 0.2 * (1.0 - cost_basis_ratio)
+                        gross_needed = shortfall / tax_factor
+                        
+                        # However, withdraw() caps by balance.
+                        withdrawn_net = general_acc.withdraw(gross_needed, apply_tax=True)
+                        living_acc.balance += withdrawn_net
+                        shortfall -= withdrawn_net
 
                 # 4 & 5: NISA
                 nisa_accounts = get_accounts_by_pattern('nisa')

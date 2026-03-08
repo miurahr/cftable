@@ -108,14 +108,20 @@ accounts:
 
   - name: "nisa"            # NISA口座
     initial_balance: 3000000
+    initial_cost_basis: 3000000 # 投資元本 (上限管理に使用)
     expected_return: 0.05    # 期待利回り (5%)
+    annual_investment_limit: 3600000  # 年間投資枠 (つみたて120万 + 成長240万)
+    lifetime_investment_limit: 18000000 # 生涯投資枠
 
   - name: "dc"              # DC (確定拠出年金) 口座
     initial_balance: 1500000
     expected_return: 0.03    # 期待利回り (3%)
+    contribution_amount: 276000 # 年間拠出額 (例: 月2.3万)
+    contribution_end_age: 60    # 拠出終了年齢 (通常60歳まで)
 
   - name: "general"         # 総合口座 (投資用)
     initial_balance: 5000000
+    initial_cost_basis: 5000000 # 投資元本 (課税計算に使用)
     expected_return: 0.03    # 期待利回り (3%)
     cash_ratio: 0.2          # 現金ポジション 20%
     withdrawal_strategy:     # 取り崩し戦略
