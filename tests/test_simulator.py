@@ -206,8 +206,8 @@ class TestSimulator(unittest.TestCase):
         res_2039 = next(r for r in sim.results if r['year'] == 2039)
         res_2040 = next(r for r in sim.results if r['year'] == 2040)
         
-        self.assertEqual(res_2039['dc_total_withdrawal'], 0)
-        self.assertEqual(res_2040['dc_total_withdrawal'], 1000000)
+        self.assertEqual(res_2039['dc_withdrawal'], 0)
+        self.assertEqual(res_2040['dc_withdrawal'], 1000000)
 
 if __name__ == '__main__':
     unittest.main()

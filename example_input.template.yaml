@@ -33,26 +33,26 @@ members:
 income_entries:
   - member: "本人"
     category: "salary"      # salary (給与), business (事業), pension (年金) 等
-    amount: 6000000         # 年収 所得税と住民税と社会保険料等控除後の手取り (円)
+    amount: 4000000         # 年収 所得税と住民税と社会保険料等控除後の手取り (円)
     start_year: 2026
     end_year: 2045          # 2045年までこの収入が続くと仮定
     growth_rate: 0.01       # 昇給率 (1% = 0.01)
 
   - member: "本人"
     category: "miscellaneous" # 副業・雑収入
-    amount: 500000
+    amount: 100000
     start_year: 2026
     end_year: 2030
 
   - member: "配偶者"
     category: "part_time"
-    amount: 1200000
+    amount: 900000
     start_year: 2026
     end_year: 2047
 
   - member: "本人"
     category: "pension"        # 公的年金 (65歳から)
-    amount: 2200000
+    amount: 1200000
     start_year: 2045          # 1980年生まれ、2045年に65歳
     end_year: 2074
     growth_rate: 0.0          # 年金はインフレ連動する場合もあるが、ここでは0とする
@@ -65,10 +65,10 @@ income_entries:
     growth_rate: 0.0
 
   - member: "本人"
-    category: "pension_corporate" # 企業年金2 (キャッシュバランスプラン、終身)
-    amount: 300000
-    start_year: 2045
-    end_year: 2074
+    category: "pension_corporate" # 企業年金2
+    amount: 400000
+    start_year: 2055
+    end_year: 2064
     growth_rate: 0.0
 
   - member: "配偶者"
@@ -78,34 +78,27 @@ income_entries:
     end_year: 2074
     growth_rate: 0.0
 
-  - member: "配偶者"
-    category: "pension_corporate" # 企業年金 (一時金または年金)
-    amount: 400000
-    start_year: 2047
-    end_year: 2056
-    growth_rate: 0.0
-
   - member: "本人"
     category: "retirement"      # 退職金 (ワンショット)
-    amount: 20000000
+    amount: 10000000
     year: 2045
 
 # 支出項目
 expense_entries:
   - category: "mortgage"    # 住宅ローン
-    amount: 1200000         # 年間返済額
+    amount: 2000000         # 年間返済額
     start_year: 2026
     end_year: 2050
     inflation_indexed: false # ローンはインフレの影響を受けない
 
   - category: "food"        # 食費
-    amount: 800000
+    amount: 900000
     start_year: 2026
     end_year: 2074          # シミュレーション終了まで
     inflation_indexed: true  # 食費はインフレの影響を受ける
 
   - category: "utility"     # 光熱費
-    amount: 300000
+    amount: 400000
     start_year: 2026
     end_year: 2074
     inflation_indexed: true
@@ -148,29 +141,29 @@ accounts:
     expected_return: 0.0     # 期待利回り (0%)
 
   - name: "defense"         # 生活防衛資金口座 (自動でリザーブされます)
-    initial_balance: 1000000
+    initial_balance: 3000000
     expected_return: 0.0
 
   - name: "nisa"            # NISA口座
-    initial_balance: 3000000
-    initial_cost_basis: 3000000 # 投資元本 (上限管理に使用)
-    expected_return: 0.05    # 期待利回り (5%)
+    initial_balance: 500000
+    initial_cost_basis: 500000 # 投資元本 (上限管理に使用)
+    expected_return: 0.03    # 期待利回り (5%)
     annual_investment_limit: 3600000  # 年間投資枠 (つみたて120万 + 成長240万)
     lifetime_investment_limit: 18000000 # 生涯投資枠
 
   - name: "dc"              # DC (確定拠出年金) 口座
-    initial_balance: 1500000
+    initial_balance: 500000
     expected_return: 0.03    # 期待利回り (3%)
     contribution_amount: 276000 # 年間拠出額 (例: 月2.3万)
     contribution_end_age: 60    # 拠出終了年齢 (通常60歳まで)
     withdrawal_strategy:     # 取り崩し戦略 (例: 65歳から月10万 = 年120万)
       type: "fixed_amount"
-      amount: 1200000
+      amount: 600000
       start_age: 65
 
   - name: "general"         # 総合口座 (投資用)
-    initial_balance: 5000000
-    initial_cost_basis: 5000000 # 投資元本 (課税計算に使用)
+    initial_balance: 1000000
+    initial_cost_basis: 1000000 # 投資元本 (課税計算に使用)
     expected_return: 0.03    # 期待利回り (3%)
     cash_ratio: 0.2          # 現金ポジション 20%
     withdrawal_strategy:     # 取り崩し戦略

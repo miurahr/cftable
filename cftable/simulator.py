@@ -47,8 +47,12 @@ class Simulator:
         # All possible keys for year_result
         base_keys = ['year', 'income', 'expense', 'cash_flow', 'living_balance']
         account_balance_keys = [f'{name}_balance' for name in self.accounts.keys()]
-        account_withdrawal_keys = [f'{name}_withdrawal' for name in self.accounts.keys()]
-        extra_keys = ['dc_total_withdrawal', 'nisa_total_withdrawal', 'total_assets']
+        # Skip withdrawal keys for 'living' and 'defense' accounts
+        account_withdrawal_keys = [
+            f'{name}_withdrawal' for name in self.accounts.keys() 
+            if 'living' not in name.lower() and 'defense' not in name.lower()
+        ]
+        extra_keys = ['nisa_total_withdrawal', 'total_assets']
         member_age_keys = [f'{m.name}_age' for m in self.members]
         
         all_field_keys = base_keys + account_balance_keys + account_withdrawal_keys + extra_keys + member_age_keys
@@ -250,13 +254,15 @@ class Simulator:
                 total_assets += acc.balance
             
             for name, withdrawal in annual_withdrawals.items():
-                year_result[f'{name}_withdrawal'] = round(withdrawal)
+                withdrawal_key = f'{name}_withdrawal'
+                if withdrawal_key in self.field_keys:
+                    year_result[withdrawal_key] = round(withdrawal)
+                
                 if 'dc' in name.lower() or 'ideco' in name.lower():
                     dc_total_withdrawal += withdrawal
                 elif 'nisa' in name.lower():
                     nisa_total_withdrawal += withdrawal
 
-            year_result['dc_total_withdrawal'] = round(dc_total_withdrawal)
             year_result['nisa_total_withdrawal'] = round(nisa_total_withdrawal)
             year_result['total_assets'] = round(total_assets)
             
