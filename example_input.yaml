@@ -99,8 +99,12 @@ expense_entries:
 # 口座・資産状況 (NISA, DC, 総合口座等)
 accounts:
   - name: "living"          # 生活費口座
-    initial_balance: 2000000 # 初期残高 (円)
+    initial_balance: 1000000 # 初期残高 (円)
     expected_return: 0.0     # 期待利回り (0%)
+
+  - name: "defense"         # 生活防衛資金口座 (自動でリザーブされます)
+    initial_balance: 1000000
+    expected_return: 0.0
 
   - name: "nisa"            # NISA口座
     initial_balance: 3000000

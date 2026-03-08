@@ -42,6 +42,18 @@ class Simulator:
 
             living_acc.balance += (annual_income - annual_expense)
 
+            # 4.5. Maintain Defense Reserve (0.5 to 1.0 year of expenses)
+            # Ensure defense has at least 6 months worth of annual expenses if living has surplus
+            defense_accs = [acc for name, acc in self.accounts.items() if 'defense' in name.lower()]
+            if defense_accs and living_acc.balance > 0:
+                defense_acc = defense_accs[0]
+                target_reserve = annual_expense * 0.5  # 6 months as recommended
+                if defense_acc.balance < target_reserve:
+                    needed = target_reserve - defense_acc.balance
+                    transfer = min(needed, living_acc.balance)
+                    defense_acc.balance += transfer
+                    living_acc.balance -= transfer
+
             # 5. Withdrawal Strategies
             for name, acc in self.accounts.items():
                 if name == 'living': continue
@@ -67,7 +79,14 @@ class Simulator:
                 def get_accounts_by_pattern(pattern):
                     return [acc for name, acc in self.accounts.items() if pattern in name.lower()]
 
-                # 1 & 2: General Account
+                # 1. Defense (Emergency Fund) - prioritized as per user request
+                for defense_acc in get_accounts_by_pattern('defense'):
+                    if shortfall <= 0: break
+                    withdrawn = defense_acc.withdraw(shortfall)
+                    living_acc.balance += withdrawn
+                    shortfall -= withdrawn
+
+                # 2 & 3: General Account
                 for general_acc in get_accounts_by_pattern('general'):
                     if shortfall <= 0: break
                     if general_acc.balance > 0:
@@ -85,7 +104,7 @@ class Simulator:
                             living_acc.balance += from_sec
                             shortfall -= from_sec
 
-                # 3 & 4: NISA
+                # 4 & 5: NISA
                 nisa_accounts = get_accounts_by_pattern('nisa')
                 def nisa_priority(acc):
                     name = acc.name.lower()
@@ -98,14 +117,6 @@ class Simulator:
                     withdrawn = nisa_acc.withdraw(shortfall)
                     living_acc.balance += withdrawn
                     shortfall -= withdrawn
-
-                # 5. Defense
-                if shortfall > 0:
-                    for defense_acc in get_accounts_by_pattern('defense'):
-                        if shortfall <= 0: break
-                        withdrawn = defense_acc.withdraw(shortfall)
-                        living_acc.balance += withdrawn
-                        shortfall -= withdrawn
 
                 # 6. DC / iDeCo
                 if shortfall > 0:
