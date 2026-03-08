@@ -165,16 +165,20 @@ YAMLから読み込まれるデータ項目は以下の通りです。
 - `category`: カテゴリ ('salary', 'part_time', 'business', 'miscellaneous', 'pension_corporate', 'pension_private')
     - 同一人に対して同一カテゴリの項目（例：複数の企業年金）を複数定義することが可能です。
 - `amount`: 年間金額
-- `start_year`: 開始年
-- `end_year`: 終了年
+- `start_year` / `end_year`: 開始年・終了年
+- `start_age` / `end_age`: 開始年齢・終了年齢 (`start_year` 等より優先)
 - `growth_rate`: 昇給率/増減率
+- `repeat_interval`: 繰り返し間隔（年）。指定した場合、`start_year`（または `start_age`）からこの年数おきに発生する。
 
 #### Expense Entries (支出項目)
-- `category`: カテゴリ ('mortgage', 'property_tax', 'management_fee', 'food', 'utility', 'others')
+- `category`: カテゴリ ('mortgage', 'property_tax', 'management_fee', 'food', 'utility', 'medical', 'tax_and_insurance', 'others')
 - `amount`: 年間金額
-- `start_year`: 開始年
-- `end_year`: 終了年
+- `start_year` / `end_year`: 開始年・終了年
+- `start_age` / `end_age`: 開始年齢・終了年齢 (`start_year` 等より優先)
+- `member`: 年齢計算の基準とする世帯員名 (省略時は 'self')
 - `inflation_indexed`: インフレ率を適用するかどうか (boolean)
+- `growth_rate`: 増減率 (インフレとは別に適用される)
+- `repeat_interval`: 繰り返し間隔（年）。指定した場合、`start_year`（または `start_age`）からこの年数おきに発生する。
 
 #### Accounts (口座情報)
 - `name`: 口座名 ('living', 'defense', 'nisa', 'ideco', 'general')

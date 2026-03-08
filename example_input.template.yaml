@@ -110,6 +110,37 @@ expense_entries:
     end_year: 2074
     inflation_indexed: true
 
+  - category: "medical"     # 医療費 (年齢とともに増加する例)
+    amount: 100000          # 60歳までは年10万
+    start_age: 0
+    end_age: 60
+    inflation_indexed: true
+
+  - category: "medical"
+    amount: 200000          # 61歳から75歳は年20万
+    start_age: 61
+    end_age: 75
+    inflation_indexed: true
+
+  - category: "medical"
+    amount: 500000          # 76歳以降は年50万
+    start_age: 76
+    end_age: 120
+    inflation_indexed: true
+
+  - category: "tax_and_insurance" # 社会保険料・住民税 (年金生活期)
+    amount: 300000                # およそ見積額
+    start_age: 65                 # 年金受給開始に合わせて設定
+    end_age: 120
+    inflation_indexed: true
+
+  - category: "housing_maintenance" # 住宅設備（給湯器・エアコン等）の買い替え
+    amount: 500000                # 買い替え費用（目安）
+    start_year: 2035              # 次回の買い替え予定年
+    end_year: 2074                # シミュレーション終了まで
+    repeat_interval: 15           # 15年おきに発生
+    inflation_indexed: true       # 設備価格もインフレの影響を受けると仮定
+
 # 口座・資産状況 (NISA, DC, 総合口座等)
 accounts:
   - name: "living"          # 生活費口座

@@ -27,6 +27,12 @@ class Simulator:
             # Default to 50 years if neither is specified
             self.duration_years = 50
 
+        # Resolve years for all entries
+        for entry in self.income_entries:
+            entry.resolve_years(self.members, self.start_year, self.duration_years)
+        for entry in self.expense_entries:
+            entry.resolve_years(self.members, self.start_year, self.duration_years)
+
     def run(self):
         primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
 
