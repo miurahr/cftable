@@ -163,6 +163,10 @@ accounts:
     expected_return: 0.03    # 期待利回り (3%)
     contribution_amount: 276000 # 年間拠出額 (例: 月2.3万)
     contribution_end_age: 60    # 拠出終了年齢 (通常60歳まで)
+    withdrawal_strategy:     # 取り崩し戦略 (例: 65歳から月10万 = 年120万)
+      type: "fixed_amount"
+      amount: 1200000
+      start_age: 65
 
   - name: "general"         # 総合口座 (投資用)
     initial_balance: 5000000

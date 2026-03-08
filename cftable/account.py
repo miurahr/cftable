@@ -1,4 +1,5 @@
-from typing import Dict, Any, Optional
+from typing import List, Dict, Any, Optional
+from cftable.models import Member
 
 class Account:
     def __init__(self, name: str, initial_balance: float, expected_return: float, 
@@ -39,6 +40,26 @@ class Account:
             contribution_amount=data.get('contribution_amount', 0.0),
             contribution_end_age=data.get('contribution_end_age', 0)
         )
+
+    def resolve_years(self, members: List[Member], default_start_year: int, default_duration: int):
+        if not self.withdrawal_strategy:
+            return
+
+        strat = self.withdrawal_strategy
+        member_name = strat.get('member')
+        if member_name:
+            member_obj = next((m for m in members if m.name == member_name), None)
+        else:
+            member_obj = next((m for m in members if m.role == 'self'), members[0])
+
+        if not member_obj:
+            return
+
+        birth_year = member_obj.birth_date.year
+        if 'start_age' in strat:
+            strat['start_year'] = birth_year + strat['start_age']
+        if 'end_age' in strat:
+            strat['end_year'] = birth_year + strat['end_age']
 
     def apply_return(self):
         self.balance *= (1 + self.expected_return)

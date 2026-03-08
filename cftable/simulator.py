@@ -32,9 +32,33 @@ class Simulator:
             entry.resolve_years(self.members, self.start_year, self.duration_years)
         for entry in self.expense_entries:
             entry.resolve_years(self.members, self.start_year, self.duration_years)
+        for account in self.accounts.values():
+            account.resolve_years(self.members, self.start_year, self.duration_years)
 
     def run(self):
         primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
+
+        # 4. Cash Flow to Living Account
+        living_acc = self.accounts.get('living')
+        if not living_acc:
+            living_acc = Account('living', 0, 0)
+            self.accounts['living'] = living_acc
+
+        # All possible keys for year_result
+        base_keys = ['year', 'income', 'expense', 'cash_flow', 'living_balance']
+        account_balance_keys = [f'{name}_balance' for name in self.accounts.keys()]
+        account_withdrawal_keys = [f'{name}_withdrawal' for name in self.accounts.keys()]
+        extra_keys = ['dc_total_withdrawal', 'nisa_total_withdrawal', 'total_assets']
+        member_age_keys = [f'{m.name}_age' for m in self.members]
+        
+        all_field_keys = base_keys + account_balance_keys + account_withdrawal_keys + extra_keys + member_age_keys
+        
+        # Use a list to maintain order and uniqueness
+        unique_field_keys = []
+        for k in all_field_keys:
+            if k not in unique_field_keys:
+                unique_field_keys.append(k)
+        self.field_keys = unique_field_keys
 
         for i in range(self.duration_years):
             current_year = self.start_year + i
@@ -58,11 +82,7 @@ class Simulator:
                 annual_expense += entry.get_amount(current_year, self.start_year, self.inflation_rate)
 
             # 4. Cash Flow to Living Account
-            living_acc = self.accounts.get('living')
-            if not living_acc:
-                living_acc = Account('living', 0, 0)
-                self.accounts['living'] = living_acc
-
+            # (Note: living_acc already retrieved outside the loop)
             living_acc.balance += (annual_income - annual_expense)
             surplus = max(0.0, living_acc.balance - living_acc.initial_balance)
 
@@ -119,14 +139,17 @@ class Simulator:
                         surplus -= invest_amount
 
             # 5. Withdrawal Strategies
+            annual_withdrawals = {name: 0.0 for name in self.accounts.keys()}
             for name, acc in self.accounts.items():
                 if name == 'living': continue
                 if acc.withdrawal_strategy:
                     strat = acc.withdrawal_strategy
-                    start_age = strat.get('start_age', 0)
                     
-                    primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
-                    if primary_member.get_age(current_year) >= start_age:
+                    # Determine start and end years
+                    start_year = strat.get('start_year', 0)
+                    end_year = strat.get('end_year', 9999)
+                    
+                    if start_year <= current_year <= end_year:
                         withdrawal_amount = 0.0
                         if strat['type'] == 'fixed_amount':
                             withdrawal_amount = strat['amount']
@@ -136,24 +159,28 @@ class Simulator:
                         apply_tax = 'general' in name.lower()
                         actual = acc.withdraw(withdrawal_amount, apply_tax=apply_tax)
                         living_acc.balance += actual
+                        annual_withdrawals[name] += actual
 
             # 6. Funding Logic if living < initial_balance
             if living_acc.balance < living_acc.initial_balance:
                 shortfall = living_acc.initial_balance - living_acc.balance
                 
                 def get_accounts_by_pattern(pattern):
-                    return [acc for name, acc in self.accounts.items() if pattern in name.lower()]
+                    return [name for name in self.accounts.keys() if pattern in name.lower()]
 
                 # 1. Defense (Emergency Fund) - prioritized as per user request
-                for defense_acc in get_accounts_by_pattern('defense'):
+                for name in get_accounts_by_pattern('defense'):
                     if shortfall <= 0: break
+                    defense_acc = self.accounts[name]
                     withdrawn = defense_acc.withdraw(shortfall)
                     living_acc.balance += withdrawn
+                    annual_withdrawals[name] += withdrawn
                     shortfall -= withdrawn
 
                 # 2 & 3: General Account
-                for general_acc in get_accounts_by_pattern('general'):
+                for name in get_accounts_by_pattern('general'):
                     if shortfall <= 0: break
+                    general_acc = self.accounts[name]
                     if general_acc.balance > 0:
                         # For general account, we need to withdraw more to cover the tax if profit exists.
                         # Target is shortfall. Net = Gross - Tax.
@@ -172,45 +199,65 @@ class Simulator:
                         # However, withdraw() caps by balance.
                         withdrawn_net = general_acc.withdraw(gross_needed, apply_tax=True)
                         living_acc.balance += withdrawn_net
+                        annual_withdrawals[name] += withdrawn_net
                         shortfall -= withdrawn_net
 
                 # 4 & 5: NISA
-                nisa_accounts = get_accounts_by_pattern('nisa')
-                def nisa_priority(acc):
-                    name = acc.name.lower()
-                    if 'growth' in name or '成長' in name: return 0
-                    if 'accum' in name or 'つみたて' in name or '積立' in name: return 1
+                nisa_account_names = get_accounts_by_pattern('nisa')
+                def nisa_priority(name):
+                    n_lower = name.lower()
+                    if 'growth' in n_lower or '成長' in n_lower: return 0
+                    if 'accum' in n_lower or 'つみたて' in n_lower or '積立' in n_lower: return 1
                     return 2
                 
-                for nisa_acc in sorted(nisa_accounts, key=nisa_priority):
+                for name in sorted(nisa_account_names, key=nisa_priority):
                     if shortfall <= 0: break
+                    nisa_acc = self.accounts[name]
                     withdrawn = nisa_acc.withdraw(shortfall)
                     living_acc.balance += withdrawn
+                    annual_withdrawals[name] += withdrawn
                     shortfall -= withdrawn
 
                 # 6. DC / iDeCo
                 if shortfall > 0:
-                    dc_accounts = get_accounts_by_pattern('dc') + get_accounts_by_pattern('ideco')
-                    for dc_acc in dc_accounts:
+                    dc_account_names = get_accounts_by_pattern('dc') + get_accounts_by_pattern('ideco')
+                    for name in dc_account_names:
                         if shortfall <= 0: break
+                        dc_acc = self.accounts[name]
                         primary_member = next((m for m in self.members if m.role == 'self'), self.members[0])
                         if primary_member.get_age(current_year) >= 60:
                             withdrawn = dc_acc.withdraw(shortfall)
                             living_acc.balance += withdrawn
+                            annual_withdrawals[name] += withdrawn
                             shortfall -= withdrawn
 
             # Record results
-            year_result = {
+            year_result = {k: 0 for k in self.field_keys}
+            year_result.update({
                 'year': current_year,
                 'income': round(annual_income),
                 'expense': round(annual_expense),
                 'cash_flow': round(annual_income - annual_expense),
                 'living_balance': round(living_acc.balance)
-            }
+            })
+            
             total_assets = 0.0
+            dc_total_withdrawal = 0.0
+            nisa_total_withdrawal = 0.0
+            
             for name, acc in self.accounts.items():
                 year_result[f'{name}_balance'] = round(acc.balance)
                 total_assets += acc.balance
+            
+            for name, withdrawal in annual_withdrawals.items():
+                year_result[f'{name}_withdrawal'] = round(withdrawal)
+                if 'dc' in name.lower() or 'ideco' in name.lower():
+                    dc_total_withdrawal += withdrawal
+                elif 'nisa' in name.lower():
+                    nisa_total_withdrawal += withdrawal
+
+            year_result['dc_total_withdrawal'] = round(dc_total_withdrawal)
+            year_result['nisa_total_withdrawal'] = round(nisa_total_withdrawal)
             year_result['total_assets'] = round(total_assets)
             
             for m in self.members:

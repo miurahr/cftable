@@ -185,5 +185,29 @@ class TestSimulator(unittest.TestCase):
         self.assertEqual(res_2026['expense'], 2000)
         self.assertEqual(res_2027['expense'], 2100)
 
+    def test_withdrawal_strategy_age_resolve(self):
+        """取り崩し戦略の年齢指定（start_age）が正しく年に変換されることを確認"""
+        # 本人: 1980年生まれ。60歳は2040年。
+        self.members[0].birth_date = datetime(1980, 1, 1)
+        accounts = [
+            Account(name="living", initial_balance=0, expected_return=0.0),
+            Account(name="dc", initial_balance=10000000, expected_return=0.0,
+                    withdrawal_strategy={'type': 'fixed_amount', 'amount': 1000000, 'start_age': 60})
+        ]
+        settings = self.settings.copy()
+        settings['start_year'] = 2038
+        settings['duration_years'] = 5 # 2038 to 2042
+        
+        sim = Simulator(settings, self.members, [], [], accounts)
+        sim.run()
+        
+        # 2038 (58歳), 2039 (59歳) は 0
+        # 2040 (60歳), 2041 (61歳), 2042 (62歳) は 100万
+        res_2039 = next(r for r in sim.results if r['year'] == 2039)
+        res_2040 = next(r for r in sim.results if r['year'] == 2040)
+        
+        self.assertEqual(res_2039['dc_total_withdrawal'], 0)
+        self.assertEqual(res_2040['dc_total_withdrawal'], 1000000)
+
 if __name__ == '__main__':
     unittest.main()
