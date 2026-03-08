@@ -47,35 +47,38 @@ class Simulator:
                 self.accounts['living'] = living_acc
 
             living_acc.balance += (annual_income - annual_expense)
+            surplus = max(0.0, living_acc.balance - living_acc.initial_balance)
 
             # 4.1 DC/iDeCo Contributions
             # Age-limited contributions from surplus
             dc_accounts = [acc for name, acc in self.accounts.items() if ('dc' in name.lower() or 'ideco' in name.lower())]
             for dc_acc in dc_accounts:
-                if dc_acc.contribution_amount > 0 and living_acc.balance > 0:
+                if dc_acc.contribution_amount > 0 and surplus > 0:
                     if primary_member.get_age(current_year) < dc_acc.contribution_end_age:
-                        amount = min(dc_acc.contribution_amount, living_acc.balance)
+                        amount = min(dc_acc.contribution_amount, surplus)
                         dc_acc.invest(amount)
                         living_acc.balance -= amount
+                        surplus -= amount
 
             # 4.5. Maintain Defense Reserve (0.5 to 1.0 year of expenses)
             # Ensure defense has at least 6 months worth of annual expenses if living has surplus
             defense_accs = [acc for name, acc in self.accounts.items() if 'defense' in name.lower()]
-            if defense_accs and living_acc.balance > 0:
+            if defense_accs and surplus > 0:
                 defense_acc = defense_accs[0]
                 target_reserve = annual_expense * 0.5  # 6 months as recommended
                 if defense_acc.balance < target_reserve:
                     needed = target_reserve - defense_acc.balance
-                    transfer = min(needed, living_acc.balance)
+                    transfer = min(needed, surplus)
                     defense_acc.balance += transfer
                     living_acc.balance -= transfer
+                    surplus -= transfer
 
             # 4.6. Investment of Surplus (NISA -> General)
-            if living_acc.balance > 0:
+            if surplus > 0:
                 # 1. NISA investment
                 nisa_accounts = [acc for name, acc in self.accounts.items() if 'nisa' in name.lower()]
                 for nisa_acc in nisa_accounts:
-                    if living_acc.balance <= 0: break
+                    if surplus <= 0: break
                     
                     # Calculate available room for this year
                     annual_room = nisa_acc.annual_investment_limit - nisa_acc.annual_invested
@@ -83,18 +86,20 @@ class Simulator:
                     room = max(0.0, min(annual_room, lifetime_room))
                     
                     if room > 0:
-                        invest_amount = min(room, living_acc.balance)
+                        invest_amount = min(room, surplus)
                         nisa_acc.invest(invest_amount)
                         living_acc.balance -= invest_amount
+                        surplus -= invest_amount
 
                 # 2. General account investment
-                if living_acc.balance > 0:
+                if surplus > 0:
                     general_accounts = [acc for name, acc in self.accounts.items() if 'general' in name.lower()]
                     for general_acc in general_accounts:
-                        if living_acc.balance <= 0: break
-                        invest_amount = living_acc.balance
+                        if surplus <= 0: break
+                        invest_amount = surplus
                         general_acc.invest(invest_amount)
                         living_acc.balance -= invest_amount
+                        surplus -= invest_amount
 
             # 5. Withdrawal Strategies
             for name, acc in self.accounts.items():
@@ -115,9 +120,9 @@ class Simulator:
                         actual = acc.withdraw(withdrawal_amount, apply_tax=apply_tax)
                         living_acc.balance += actual
 
-            # 6. Funding Logic if living < 0
-            if living_acc.balance < 0:
-                shortfall = -living_acc.balance
+            # 6. Funding Logic if living < initial_balance
+            if living_acc.balance < living_acc.initial_balance:
+                shortfall = living_acc.initial_balance - living_acc.balance
                 
                 def get_accounts_by_pattern(pattern):
                     return [acc for name, acc in self.accounts.items() if pattern in name.lower()]

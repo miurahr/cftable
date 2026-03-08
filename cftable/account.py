@@ -7,6 +7,7 @@ class Account:
                  annual_investment_limit: float = 0.0, lifetime_investment_limit: float = 0.0,
                  contribution_amount: float = 0.0, contribution_end_age: int = 0):
         self.name = name
+        self.initial_balance = float(initial_balance)
         self.balance = float(initial_balance)
         self.expected_return = float(expected_return)
         self.cash_ratio = float(cash_ratio)
