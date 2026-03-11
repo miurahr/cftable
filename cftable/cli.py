@@ -46,6 +46,7 @@ def run_cli():
     parser = argparse.ArgumentParser(description='Cash Flow Simulation Tool')
     parser.add_argument('input', help='Input YAML file path')
     parser.add_argument('--output', '-o', help='Output CSV file path', default='output.csv')
+    parser.add_argument('--graph', '-g', help='Output graph image path (e.g., graph.png)')
     
     args = parser.parse_args()
     
@@ -69,8 +70,12 @@ def run_cli():
     
     writer = get_writer(args.output, results)
     writer.write(args.output)
-    
     print(f"Results saved to: {args.output}")
+
+    if args.graph:
+        graph_writer = get_writer(args.graph, results)
+        graph_writer.write(args.graph)
+        print(f"Graph saved to: {args.graph}")
 
 if __name__ == "__main__":
     run_cli()

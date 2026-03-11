@@ -56,8 +56,15 @@ class Simulator:
         account_balance_keys = [f'{name}_balance' for name in sorted(self.accounts.keys())]
         member_age_keys = [f'{m.name}_age' for m in self.members]
 
+        expense_detail_keys = []
+        for entry in self.expense_entries:
+            key = f'expense_{entry.category}'
+            if key not in expense_detail_keys:
+                expense_detail_keys.append(key)
+        expense_detail_keys.sort()
+
         self.field_keys = ['year', 'income', 'expense', 'cash_flow', 'withdrawal', 'living_balance', 'total_assets'] + \
-                          member_age_keys + account_balance_keys + account_withdrawal_keys + income_detail_keys
+                          member_age_keys + account_balance_keys + account_withdrawal_keys + income_detail_keys + expense_detail_keys
 
         for i in range(self.duration_years):
             current_year = self.start_year + i
@@ -76,8 +83,12 @@ class Simulator:
 
             # 5. Calculate Expenses
             annual_expense = 0.0
+            expense_details = {k: 0.0 for k in expense_detail_keys}
             for entry in self.expense_entries:
-                annual_expense += entry.get_amount(current_year, self.start_year, self.inflation_rate)
+                amount = entry.get_amount(current_year, self.start_year, self.inflation_rate)
+                annual_expense += amount
+                key = f'expense_{entry.category}'
+                expense_details[key] += amount
 
             # 6. Cash Flow to Living Account
             living_acc.balance += (annual_income - annual_expense)
@@ -222,6 +233,9 @@ class Simulator:
                 'living_balance': round(living_acc.balance)
             })
             for key, amount in income_details.items():
+                year_result[key] = round(amount)
+            
+            for key, amount in expense_details.items():
                 year_result[key] = round(amount)
             
             for name, withdrawal in annual_withdrawals.items():
