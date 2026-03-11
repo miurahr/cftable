@@ -133,10 +133,6 @@ accounts:
     initial_balance: 1000000 # 初期残高 (円)
     expected_return: 0.0     # 期待利回り (0%)
 
-  - name: "defense"         # 生活防衛資金口座 (自動でリザーブされます)
-    initial_balance: 3000000
-    expected_return: 0.0
-
   - name: "nisa"            # NISA口座
     initial_balance: 500000
     initial_cost_basis: 500000 # 投資元本 (上限管理に使用)
