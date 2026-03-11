@@ -113,15 +113,15 @@ class TestSimulator(unittest.TestCase):
         self.assertEqual(res_2039['dc_balance'], 300000 * 14)
         self.assertEqual(res_2040['dc_balance'], 300000 * 14)
 
-    def test_general_account_tax(self):
-        """総合口座の取り崩し時に20%課税されることを確認"""
+    def test_tokutei_account_tax(self):
+        """特定口座の取り崩し時に20%課税されることを確認"""
         # 初期 1000万, 元本 500万 -> 利益 500万
         # 100万取り崩そうとすると、利益率は 50%
         # 100万の内、利益は 50万。税金は 50万 * 0.2 = 10万。手取り 90万。
         # 不足分が 90万の場合、100万取り崩されるはず。
         accounts = [
             Account(name="living", initial_balance=1000000, expected_return=0.0),
-            Account(name="general", initial_balance=10000000, initial_cost_basis=5000000, expected_return=0.0)
+            Account(name="tokutei", initial_balance=10000000, initial_cost_basis=5000000, expected_return=0.0)
         ]
         # 2026年に 90万円不足させる
         income = [
@@ -139,7 +139,7 @@ class TestSimulator(unittest.TestCase):
         res = sim.results[0]
         # 手取り 90万を得るために、100万取り崩されたはず
         # balance: 1000万 -> 900万
-        self.assertEqual(res['general_balance'], 9000000)
+        self.assertEqual(res['tokutei_balance'], 9000000)
         self.assertEqual(res['living_balance'], 1000000)
 
     def test_oneshot_entry(self):

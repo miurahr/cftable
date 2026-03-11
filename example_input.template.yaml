@@ -40,7 +40,7 @@ income_entries:
 
   - member: "本人"
     category: "miscellaneous" # 副業・雑収入
-    amount: 100000
+    amount: 100000            # 年10万円
     start_year: 2026
     end_year: 2030
 
@@ -58,17 +58,10 @@ income_entries:
     growth_rate: 0.0          # 年金はインフレ連動する場合もあるが、ここでは0とする
 
   - member: "本人"
-    category: "pension_corporate" # 企業年金1 (確定給付企業年金など、10年確定)
+    category: "pension_corporate" # 企業年金1 (確定給付企業年金など)
     amount: 600000
     start_year: 2045
     end_year: 2054
-    growth_rate: 0.0
-
-  - member: "本人"
-    category: "pension_corporate" # 企業年金2
-    amount: 400000
-    start_year: 2055
-    end_year: 2064
     growth_rate: 0.0
 
   - member: "配偶者"
@@ -134,7 +127,7 @@ expense_entries:
     repeat_interval: 15           # 15年おきに発生
     inflation_indexed: true       # 設備価格もインフレの影響を受けると仮定
 
-# 口座・資産状況 (NISA, DC, 総合口座等)
+# 口座・資産状況 (NISA, DC, 特定口座等)
 accounts:
   - name: "living"          # 生活費口座
     initial_balance: 1000000 # 初期残高 (円)
@@ -147,25 +140,28 @@ accounts:
   - name: "nisa"            # NISA口座
     initial_balance: 500000
     initial_cost_basis: 500000 # 投資元本 (上限管理に使用)
-    expected_return: 0.03    # 期待利回り (5%)
+    expected_return: 0.03    # 期待利回り (3%)
     annual_investment_limit: 3600000  # 年間投資枠 (つみたて120万 + 成長240万)
     lifetime_investment_limit: 18000000 # 生涯投資枠
+    withdrawal_strategy:     # 取り崩し戦略
+      type: "fixed_rate"     # 定率取り崩し
+      rate: 0.06             # 毎年 6% ずつ取り崩し
+      start_age: 65          # 65歳から開始
 
-  - name: "dc"              # DC (確定拠出年金) 口座
+  - name: "dc"              # DC/iDeCo (確定拠出年金) 口座 or ideco
     initial_balance: 500000
     expected_return: 0.03    # 期待利回り (3%)
     contribution_amount: 276000 # 年間拠出額 (例: 月2.3万)
     contribution_end_age: 60    # 拠出終了年齢 (通常60歳まで)
-    withdrawal_strategy:     # 取り崩し戦略 (例: 65歳から月10万 = 年120万)
+    withdrawal_strategy:     # 取り崩し戦略 (例: 65歳から月5万 = 年60万)
       type: "fixed_amount"
       amount: 600000
       start_age: 65
 
-  - name: "general"         # 総合口座 (投資用)
+  - name: "tokutei"         # 特定口座 (投資用)
     initial_balance: 1000000
     initial_cost_basis: 1000000 # 投資元本 (課税計算に使用)
-    expected_return: 0.03    # 期待利回り (3%)
-    cash_ratio: 0.2          # 現金ポジション 20%
+    expected_return: 0.02    # 期待利回り (2%)
     withdrawal_strategy:     # 取り崩し戦略
       type: "fixed_rate"     # 定率取り崩し
       rate: 0.04             # 毎年 4% ずつ取り崩し
