@@ -168,4 +168,4 @@ cython_debug/
 *.local.csv
 *.private.yaml
 *.private.csv
-output*
+output*.csv
