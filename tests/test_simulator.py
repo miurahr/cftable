@@ -18,10 +18,10 @@ class TestSimulator(unittest.TestCase):
     def test_initial_balance_preservation(self):
         """生活費口座の初期残高が維持されることを確認"""
         # 初期残高 100万円、収入なし、支出 50万円
-        # 生活費口座から 50万円減るが、他の口座（defense）から補填されるはず
+        # 生活費口座から 50万円減るが、他の口座（tokutei）から補填されるはず
         accounts = [
             Account(name="living", initial_balance=1000000, expected_return=0.0),
-            Account(name="defense", initial_balance=3000000, expected_return=0.0)
+            Account(name="tokutei", initial_balance=3000000, expected_return=0.0)
         ]
         income = []
         expense = [
@@ -34,32 +34,11 @@ class TestSimulator(unittest.TestCase):
         # 各年で living_balance が 100万円を維持しているか
         for res in sim.results:
             self.assertEqual(res['living_balance'], 1000000)
-            # その分 defense が減っているはず
+            # その分 tokutei が減っているはず
             year_idx = res['year'] - 2026
-            expected_defense = 3000000 - 500000 * (year_idx + 1)
-            self.assertEqual(res['defense_balance'], expected_defense)
+            expected_tokutei = 3000000 - 500000 * (year_idx + 1)
+            self.assertEqual(res['tokutei_balance'], expected_tokutei)
 
-    def test_defense_auto_allocation(self):
-        """生活防衛資金が自動で確保されることを確認（支出の6ヶ月分）"""
-        # 初期残高: living 100万, defense 0
-        # 収入 500万, 支出 100万 -> 余剰 400万
-        # defense の目標は 100万 * 0.5 = 50万
-        accounts = [
-            Account(name="living", initial_balance=1000000, expected_return=0.0),
-            Account(name="defense", initial_balance=0, expected_return=0.0)
-        ]
-        income = [
-            IncomeEntry(member="本人", category="salary", amount=5000000, start_year=2026, end_year=2030)
-        ]
-        expense = [
-            ExpenseEntry(category="living", amount=1000000, start_year=2026, end_year=2030, inflation_indexed=False)
-        ]
-        
-        sim = Simulator(self.settings, self.members, income, expense, accounts)
-        sim.run()
-        
-        # 1年目で defense が 50万円確保されているはず
-        self.assertEqual(sim.results[0]['defense_balance'], 500000)
 
     def test_nisa_limits(self):
         """NISAの年間投資枠と生涯投資枠が守られることを確認"""

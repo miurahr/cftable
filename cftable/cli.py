@@ -9,6 +9,7 @@ import sys
 from cftable.models import Member, IncomeEntry, ExpenseEntry
 from cftable.account import Account
 from cftable.simulator import Simulator
+from cftable.output import CSVOutputWriter
 
 def check_privacy_concerns(data):
     """入力データに個人情報が含まれていそうな場合に警告を表示する"""
@@ -63,9 +64,11 @@ def run_cli():
     accounts = [Account.from_dict(a) for a in data['accounts']]
 
     simulator = Simulator(settings, members, income_entries, expense_entries, accounts)
-    simulator.run()
+    results = simulator.run()
     simulator.print_summary()
-    simulator.write_csv(args.output)
+    
+    writer = CSVOutputWriter(results)
+    writer.write(args.output)
     
     print(f"Results saved to: {args.output}")
 

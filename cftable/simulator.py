@@ -1,4 +1,3 @@
-import csv
 from typing import List, Dict, Any, Optional
 from cftable.models import Member, IncomeEntry, ExpenseEntry
 from cftable.account import Account
@@ -44,10 +43,8 @@ class Simulator:
             living_acc = Account('living', 0, 0)
             self.accounts['living'] = living_acc
 
-        # All possible keys for year_result
-        base_keys = ['year', 'income', 'withdrawal', 'expense', 'cash_flow', 'living_balance']
-        
-        # Income breakdown keys
+        # 4. All possible keys for year_result
+        # These will be used to initialize year_result dictionary
         income_detail_keys = []
         for entry in self.income_entries:
             key = f'income_{entry.member}_{entry.category}'
@@ -55,29 +52,12 @@ class Simulator:
                 income_detail_keys.append(key)
         income_detail_keys.sort()
         
+        account_withdrawal_keys = [f'{name}_withdrawal' for name in sorted(self.accounts.keys())]
         account_balance_keys = [f'{name}_balance' for name in sorted(self.accounts.keys())]
-        # Skip withdrawal keys for 'living' and 'defense' accounts
-        account_withdrawal_keys = []
-        for name in sorted(self.accounts.keys()):
-            # We want withdrawal keys for all accounts except living and maybe defense (though defense withdrawal IS used)
-            # Actually, the previous code had them all. Let's make sure they are ALL there.
-            account_withdrawal_keys.append(f'{name}_withdrawal')
-        extra_keys = ['total_assets']
         member_age_keys = [f'{m.name}_age' for m in self.members]
-        
-        all_field_keys = base_keys + income_detail_keys + account_balance_keys + account_withdrawal_keys + extra_keys + member_age_keys
-        
-        # Use a list to maintain order and uniqueness
-        unique_field_keys = []
-        for k in all_field_keys:
-            if k not in unique_field_keys:
-                unique_field_keys.append(k)
-        self.field_keys = unique_field_keys
-        
-        # DEBUG
-        # import sys
-        # print(f"DEBUG: all_field_keys: {all_field_keys}", file=sys.stderr)
-        # print(f"DEBUG: self.field_keys: {self.field_keys}", file=sys.stderr)
+
+        self.field_keys = ['year', 'income', 'expense', 'cash_flow', 'withdrawal', 'living_balance', 'total_assets'] + \
+                          member_age_keys + account_balance_keys + account_withdrawal_keys + income_detail_keys
 
         for i in range(self.duration_years):
             current_year = self.start_year + i
@@ -140,15 +120,6 @@ class Simulator:
                 def get_accounts_by_pattern(pattern):
                     return [name for name in self.accounts.keys() if pattern in name.lower()]
 
-                # 2.1 Defense (Emergency Fund)
-                for name in get_accounts_by_pattern('defense'):
-                    if shortfall <= 0: break
-                    defense_acc = self.accounts[name]
-                    withdrawn = defense_acc.withdraw(shortfall)
-                    living_acc.balance += withdrawn
-                    annual_withdrawals[name] += withdrawn
-                    shortfall -= withdrawn
-
                 # 2.2 Tokutei Account
                 for name in get_accounts_by_pattern('tokutei'):
                     if shortfall <= 0: break
@@ -208,18 +179,6 @@ class Simulator:
                         dc_acc.invest(amount)
                         living_acc.balance -= amount
                         surplus -= amount
-
-            # 7.2 Maintain Defense Reserve
-            defense_accs = [acc for name, acc in self.accounts.items() if 'defense' in name.lower()]
-            if defense_accs and surplus > 0:
-                defense_acc = defense_accs[0]
-                target_reserve = annual_expense * 0.5
-                if defense_acc.balance < target_reserve:
-                    needed = target_reserve - defense_acc.balance
-                    transfer = min(needed, surplus)
-                    defense_acc.balance += transfer
-                    living_acc.balance -= transfer
-                    surplus -= transfer
 
             # 7.3 Investment of Surplus (NISA -> Tokutei)
             if surplus > 0:
@@ -317,12 +276,3 @@ class Simulator:
             print("Warning: The simulation ends with negative assets.")
         print("==========================\n")
 
-    def write_csv(self, output_path: str):
-        if not self.results:
-            return
-        
-        fieldnames = self.results[0].keys()
-        with open(output_path, 'w', newline='', encoding='utf-8-sig') as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
-            writer.writeheader()
-            writer.writerows(self.results)
