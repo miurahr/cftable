@@ -46,15 +46,26 @@ class Simulator:
 
         # All possible keys for year_result
         base_keys = ['year', 'income', 'withdrawal', 'expense', 'cash_flow', 'living_balance']
+        
+        # Income breakdown keys
+        income_detail_keys = []
+        for entry in self.income_entries:
+            key = f'income_{entry.member}_{entry.category}'
+            if key not in income_detail_keys:
+                income_detail_keys.append(key)
+        income_detail_keys.sort()
+        
         account_balance_keys = [f'{name}_balance' for name in sorted(self.accounts.keys())]
         # Skip withdrawal keys for 'living' and 'defense' accounts
-        account_withdrawal_keys = [
-            f'{name}_withdrawal' for name in sorted(self.accounts.keys())
-        ]
+        account_withdrawal_keys = []
+        for name in sorted(self.accounts.keys()):
+            # We want withdrawal keys for all accounts except living and maybe defense (though defense withdrawal IS used)
+            # Actually, the previous code had them all. Let's make sure they are ALL there.
+            account_withdrawal_keys.append(f'{name}_withdrawal')
         extra_keys = ['total_assets']
         member_age_keys = [f'{m.name}_age' for m in self.members]
         
-        all_field_keys = base_keys + account_balance_keys + account_withdrawal_keys + extra_keys + member_age_keys
+        all_field_keys = base_keys + income_detail_keys + account_balance_keys + account_withdrawal_keys + extra_keys + member_age_keys
         
         # Use a list to maintain order and uniqueness
         unique_field_keys = []
@@ -62,6 +73,11 @@ class Simulator:
             if k not in unique_field_keys:
                 unique_field_keys.append(k)
         self.field_keys = unique_field_keys
+        
+        # DEBUG
+        # import sys
+        # print(f"DEBUG: all_field_keys: {all_field_keys}", file=sys.stderr)
+        # print(f"DEBUG: self.field_keys: {self.field_keys}", file=sys.stderr)
 
         for i in range(self.duration_years):
             current_year = self.start_year + i
@@ -71,8 +87,12 @@ class Simulator:
 
             # 4. Calculate Income
             annual_income = 0.0
+            income_details = {k: 0.0 for k in income_detail_keys}
             for entry in self.income_entries:
-                annual_income += entry.get_amount(current_year)
+                amount = entry.get_amount(current_year)
+                annual_income += amount
+                key = f'income_{entry.member}_{entry.category}'
+                income_details[key] += amount
 
             # 5. Calculate Expenses
             annual_expense = 0.0
@@ -108,9 +128,14 @@ class Simulator:
                         living_acc.balance += actual
                         annual_withdrawals[name] += actual
 
-            # 2. Funding Logic if living < initial_balance (Emergency withdrawals)
+            # 2. Funding Logic if living < living_acc.initial_balance or living < 0
+            shortfall = 0.0
             if living_acc.balance < living_acc.initial_balance:
                 shortfall = living_acc.initial_balance - living_acc.balance
+            elif living_acc.balance < 0:
+                shortfall = -living_acc.balance
+            
+            if shortfall > 0:
                 
                 def get_accounts_by_pattern(pattern):
                     return [name for name in self.accounts.keys() if pattern in name.lower()]
@@ -133,6 +158,7 @@ class Simulator:
                         tax_factor = 1.0 - 0.2 * (1.0 - cost_basis_ratio)
                         gross_needed = shortfall / tax_factor
                         
+                        # Use withdraw method which applies tax and updates balance
                         withdrawn_net = tokutei_acc.withdraw(gross_needed, apply_tax=True)
                         living_acc.balance += withdrawn_net
                         annual_withdrawals[name] += withdrawn_net
@@ -236,6 +262,13 @@ class Simulator:
                 'cash_flow': round(annual_income - annual_expense),
                 'living_balance': round(living_acc.balance)
             })
+            for key, amount in income_details.items():
+                year_result[key] = round(amount)
+            
+            for name, withdrawal in annual_withdrawals.items():
+                withdrawal_key = f'{name}_withdrawal'
+                if withdrawal_key in self.field_keys:
+                    year_result[withdrawal_key] = round(withdrawal)
             
             total_assets = 0.0
             dc_total_withdrawal = 0.0

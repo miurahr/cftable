@@ -209,5 +209,35 @@ class TestSimulator(unittest.TestCase):
         self.assertEqual(res_2039['dc_withdrawal'], 0)
         self.assertEqual(res_2040['dc_withdrawal'], 1000000)
 
+    def test_pension_aggregation_by_member(self):
+        """複数のメンバーの年金が個別に集計されることを確認"""
+        members = [
+            Member(name="本人", role="self", birth_date=datetime(1970, 1, 1), retirement_age=65, pension_start_age=65),
+            Member(name="配偶者", role="spouse", birth_date=datetime(1973, 1, 1), retirement_age=65, pension_start_age=65)
+        ]
+        accounts = [Account(name="living", initial_balance=0, expected_return=0.0)]
+        income = [
+            IncomeEntry(member="本人", category="pension", amount=2400000, start_year=2035, end_year=2040),
+            IncomeEntry(member="配偶者", category="pension", amount=950000, start_year=2037, end_year=2040)
+        ]
+        expense = []
+        settings = self.settings.copy()
+        settings['start_year'] = 2035
+        settings['duration_years'] = 5
+        
+        sim = Simulator(settings, members, income, expense, accounts)
+        sim.run()
+        
+        # 2035: 本人分のみ
+        res_2035 = next(r for r in sim.results if r['year'] == 2035)
+        self.assertEqual(res_2035['income_本人_pension'], 2400000)
+        self.assertEqual(res_2035.get('income_配偶者_pension', 0), 0)
+        
+        # 2037: 両方
+        res_2037 = next(r for r in sim.results if r['year'] == 2037)
+        self.assertEqual(res_2037['income_本人_pension'], 2400000)
+        self.assertEqual(res_2037['income_配偶者_pension'], 950000)
+        self.assertEqual(res_2037['income'], 2400000 + 950000)
+
 if __name__ == '__main__':
     unittest.main()
