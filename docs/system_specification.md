@@ -187,7 +187,7 @@ YAMLから読み込まれるデータ項目は以下の通りです。
 - `repeat_interval`: 繰り返し間隔（年）。指定した場合、`start_year`（または `start_age`）からこの年数おきに発生する。
 
 #### Accounts (口座情報)
-- `name`: 口座名 ('living', 'defense', 'nisa', 'ideco', 'tokutei')
+- `name`: 口座名 ('living', 'nisa', 'ideco', 'tokutei')
 - `initial_balance`: シミュレーション開始時の残高
 - `expected_return`: 期待利回り (運用利回り)
 - `cash_ratio`: （特定口座のみ）現金ポジションの割合 (0.0 - 1.0)
