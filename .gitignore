@@ -169,3 +169,8 @@ cython_debug/
 *.private.yaml
 *.private.csv
 output*.csv
+*.private.png
+*.local.png
+*.private.ods
+*.local.ods
+.output.txt
