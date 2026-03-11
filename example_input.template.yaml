@@ -16,7 +16,7 @@ simulation_settings:
   end_age: 90               # 主メンバー(role: self)がこの年齢になるまで計算
   start_year: 2026          # シミュレーション開始年
 
-# 家族構成 (夫婦2名)
+# 家族構成 (夫婦2名、子供1名)
 members:
   - name: "本人"
     role: "self"
@@ -26,6 +26,11 @@ members:
   - name: "配偶者"
     role: "spouse"
     birth_date: "1982-05-15"
+    retirement_age: 65
+    pension_start_age: 65
+  - name: "第一子"
+    role: "child"
+    birth_date: "2020-04-10"
     retirement_age: 65
     pension_start_age: 65
 
@@ -94,6 +99,20 @@ expense_entries:
     amount: 400000
     start_year: 2026
     end_year: 2074
+    inflation_indexed: true
+
+  - category: "education"   # 教育費 (子供の進学に合わせて設定)
+    member: "第一子"         # 該当する家族の名前を指定
+    amount: 1000000         # 小学校入学(6歳)から中学卒業(15歳)まで年100万
+    start_age: 6
+    end_age: 15
+    inflation_indexed: true
+
+  - category: "education"   # 教育費 (高校・大学)
+    member: "第一子"
+    amount: 2000000         # 高校入学(15歳)から大学卒業(22歳)まで年200万
+    start_age: 15
+    end_age: 22
     inflation_indexed: true
 
   - category: "medical"     # 医療費 (年齢とともに増加する例)

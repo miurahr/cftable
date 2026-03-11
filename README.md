@@ -120,14 +120,16 @@ tox -e py314
 - `growth_rate`: 年間の昇給率（例: `0.01` は 1%）
 
 ### 4. expense_entries (支出項目)
-生活費やローンなどの支出を定義します。
-- `category`: カテゴリ名 (`food`, `mortgage`, `utility` など)
+生活費やローン、教育費などの支出を定義します。
+- `category`: カテゴリ名 (`food`, `mortgage`, `utility`, `education` など)
 - `amount`: 年間の支出額（円）
-- `start_year`: 支出が発生する開始年
-- `end_year`: 支出が終了する年
+- `member`: (任意) 該当する世帯員の名前。指定するとその世帯員の年齢に基づいて期間を設定できます。
+- `start_age`, `end_age`: `member` で指定した世帯員の年齢に基づく開始・終了年。
+- `start_year`, `end_year`: 支出が発生する開始年、終了年。
 - `year`: (ワンショット支出のみ) 発生する年。`start_year`, `end_year` の代わりに指定可能。
 - `inflation_indexed`: インフレ率を適用するかどうか (`true` または `false`)
   - 住宅ローンなどは `false`、食費などは `true` を推奨します。
+- `repeat_interval`: (任意) 支出が発生する間隔（年）。「15年おき」などの設定に使用します。
 
 ### 5. accounts (口座・資産)
 保有する資産口座と運用設定を定義します。

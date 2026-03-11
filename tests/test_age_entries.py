@@ -54,5 +54,26 @@ class TestAgeBasedEntries(unittest.TestCase):
         self.assertEqual(expense[0].get_amount(2026, 2026, 0.0), 1000)
         self.assertEqual(expense[0].get_amount(2027, 2026, 0.0), 1100)
 
+    def test_child_education_expense(self):
+        # 2020年生まれの子供
+        child = Member(name="子供", role="child", birth_date=datetime(2020, 1, 1), retirement_age=65, pension_start_age=65)
+        members = self.members + [child]
+        
+        # 子供の6歳(2026年)から22歳(2042年)までの教育費
+        expense = [
+            ExpenseEntry(category="education", member="子供", amount=1000000, start_age=6, end_age=22, inflation_indexed=False)
+        ]
+        
+        sim = Simulator(self.settings, members, [], expense, [])
+        
+        # 2025年 (5歳) は 0
+        self.assertEqual(expense[0].get_amount(2025, 2026, 0.0), 0)
+        # 2026年 (6歳) は 1000000
+        self.assertEqual(expense[0].get_amount(2026, 2026, 0.0), 1000000)
+        # 2042年 (22歳) は 1000000
+        self.assertEqual(expense[0].get_amount(2042, 2026, 0.0), 1000000)
+        # 2043年 (23歳) は 0
+        self.assertEqual(expense[0].get_amount(2043, 2026, 0.0), 0)
+
 if __name__ == '__main__':
     unittest.main()
