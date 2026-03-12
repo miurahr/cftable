@@ -9,6 +9,8 @@ from odf.text import P
 try:
     import matplotlib.pyplot as plt
     import matplotlib.ticker as ticker
+    import logging
+    logging.getLogger('matplotlib.font_manager').disabled = True
     plt.rcParams['font.family'] = [
         'Noto Sans CJK JP',
         'Noto Sans JP',
